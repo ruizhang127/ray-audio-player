@@ -1,16 +1,3 @@
-body {
-  background-color: pink;
-}
-.player-container {
-  position: absolute;
-  left: 10%;
-  top: 10%;
-  margin: 0;
-  padding: 0;
-  width: 80%;
-  height: 80%;
-}
-
 /**
  * Player panel
  */
@@ -26,9 +13,114 @@ body {
 }
 
 /**
+ * Content: track list & track details
+ */
+.player-panel .content {
+  display: flex;
+  top: 0;
+  width: 100%;
+  height: calc(100% - 70px);
+}
+
+/**
+ * Track list
+ */
+.player-panel .track-list {
+  display: flex;
+  flex-direction: column;
+  
+  border-radius: 10px 0 0 0;
+  width: 40%;
+  background-color: #282A36; /* fixed color */
+}
+.player-panel .list-title {
+  margin: 20px 20px 0;
+  height: 64px;
+  line-height: 64px;
+  font-size: 30px;
+}
+.player-panel .track-list .h-divider {
+  background-color: #999; /* fixed color */
+}
+.player-panel .track-row {
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+  border-bottom: 1px solid #333; /* fixed color */
+  font-size: 15px;
+  color: #fff;
+  cursor: pointer;
+}
+.player-panel .track-row.selected {
+  color: #fff;
+  background-color: #50546c; /* fixed color */
+}
+.player-panel .track-row:hover {
+  color: #999;
+  background-color: #50546c; /* fixed color */
+}
+
+/**
+ * Track details: artist, album, title, duration
+ */
+.player-panel .track-details {
+  display: flex;
+  flex-direction: column;
+
+  border-top: 1px solid #999;
+  border-right: 1px solid #999;
+  border-radius: 0 10px 0 0;
+  width: 60%;
+  background-color: #fff;
+}
+.player-panel .track-details .meta {
+  padding: 20px;
+  border-bottom: 1px solid #999;
+  border-radius: 0 10px 0 0;
+  color: #999;
+}
+.player-panel .track-details .meta .title {
+  height: 40px;
+  line-height: 40px;
+  font-size: 22px;
+  color: #333;
+}
+.player-panel .track-details .meta .artist,
+.player-panel .track-details .meta .album {
+  display: inline-block;
+  color: #999;
+}
+
+.player-panel .track-details .subtitle {
+  flex-grow: 1;
+  
+  display: flex;
+  flex-direction: column;
+
+  padding: 30px 0;
+  font-size: 18px;
+  color: #999;
+  overflow-y: scroll;
+}
+.player-panel .track-details .subtitle .subtitle-row {
+  flex-grow: 1;
+  padding: 10px 0;
+  text-align: center;
+}
+.player-panel .subtitle-row.singing {
+  font-weight: 700;
+  color: #003;
+}
+
+
+
+
+
+
+/**
  * Bottom control bar
  */
-.control {
+ .player-panel .control {
   display: flex;
   flex-wrap: wrap-reverse;
   align-items: center;
@@ -44,7 +136,7 @@ body {
 /**
  * Buttons
  */
-.control-buttons {
+.player-panel .control-buttons {
   display: flex;
   align-items: center;
   justify-content: space-evenly;
@@ -57,7 +149,7 @@ body {
 /**
  * Play circle
  */
-.play-circle-button {
+.player-panel .play-circle-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,74 +161,73 @@ body {
   background-color: #EC6B66; /* fixed color */
   cursor: pointer;
 }
-.play-circle-button .hide {
+.player-panel .play-circle-button .hide {
   opacity: 0;
   visibility: hidden;
 }
 
-.play {
+.player-panel .play {
   position: absolute;
   margin-left: 1px;
   transition: all .2s;
 }
-.play:hover {
+.player-panel .play:hover {
   border-left-color: #333;
 }
 
-.pause {
+.player-panel .pause {
   display: flex;
   justify-content: center;
   position: absolute;
   width: 100%;
   transition: all .2s;
 }
-.pause > span {
+.player-panel .pause > span {
   margin: 0 2px;
   width: 4px;
   height: 16px;
 }
-.pause:hover > span {
+.player-panel .pause:hover > span {
   background-color: #333;
 }
 
-.control-buttons .pre,
-.control-buttons .next {
+.player-panel .control-buttons .pre,
+.player-panel .control-buttons .next {
   display: flex;
   cursor: pointer;
 }
-.control-buttons .pre:hover .column,
-.control-buttons .next:hover .column {
+.player-panel .control-buttons .pre:hover .column,
+.player-panel .control-buttons .next:hover .column {
   background-color: #999;
 }
-.control-buttons .pre:hover .left-arrow {
+.player-panel .control-buttons .pre:hover .left-arrow {
   border-right-color: #999;
 }
-.control-buttons .next:hover .right-arrow {
+.player-panel .control-buttons .next:hover .right-arrow {
   border-left-color: #999;
 }
-
 
 /**
  * Progress bar
  */
-.progress {
+ .player-panel .progress {
   display: flex;
   align-items: center;
   width: 70%;
   min-width: 300px;
   height: 50px;
 }
-.progress-bar {
+.player-panel .progress input.progress-bar {
   appearance: none;
   width: 75%;
   background-color: transparent;
   cursor: pointer;
 }
-.progress-bar:focus {
+.player-panel .progress .progress-bar:focus {
   outline: none;
 }
 
-.progress-bar::-webkit-slider-runnable-track {
+.player-panel .progress .progress-bar::-webkit-slider-runnable-track {
   display: flex;
   align-items: center;
   height: 6px;
@@ -144,7 +235,7 @@ body {
   border-radius: 3px;
   cursor: pointer;
 }
-.progress-bar::-webkit-slider-thumb {
+.player-panel .progress .progress-bar::-webkit-slider-thumb {
   appearance: none;
   height: 12px;
   width: 12px;
@@ -152,115 +243,36 @@ body {
   background-color: #fff;
   cursor: pointer;
 }
-.progress-bar::-webkit-slider-thumb:hover {
+.player-panel .progress .progress-bar::-webkit-slider-thumb:hover {
   box-shadow: 0 0 4px 0 #fff;
 }
 
-.progress .time {
+.player-panel .progress .time {
   display: flex;
   justify-content: flex-end;
   margin: 0 8px;
   width: 40px;
   text-align: center;
 }
-.progress .duration {
+.player-panel .progress .duration {
   justify-content: flex-start;
 }
-
 /**
- * Content: track list & track details
+ * Firefox
  */
-.content {
+.player-panel .progress .progress-bar::-moz-range-track {
   display: flex;
-  top: 0;
-  width: 100%;
-  height: calc(100% - 70px);
-}
-
-/**
- * Track list
- */
-.track-list {
-  display: flex;
-  flex-direction: column;
-  
-  border-radius: 10px 0 0 0;
-  width: 40%;
-  background-color: #282A36; /* fixed color */
-}
-.list-title {
-  margin: 20px 20px 0;
-  height: 64px;
-  line-height: 64px;
-  font-size: 30px;
-}
-.track-list .h-divider {
+  align-items: center;
+  height: 6px;
   background-color: #999; /* fixed color */
-}
-.track-row {
-  padding: 0 20px;
-  height: 40px;
-  line-height: 40px;
-  border-bottom: 1px solid #333; /* fixed color */
-  font-size: 15px;
-  color: #fff;
+  border-radius: 3px;
   cursor: pointer;
 }
-.track-row.selected {
-  color: #fff;
-  background-color: #50546c; /* fixed color */
-}
-.track-row:hover {
-  color: #999;
-  background-color: #50546c; /* fixed color */
-}
-
-/**
- * Track details: artist, album, title, duration
- */
-.track-details {
-  display: flex;
-  flex-direction: column;
-
-  border-radius: 0 10px 0 0;
-  width: 60%;
+.player-panel .progress .progress-bar::-moz-range-thumb {
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
   background-color: #fff;
-}
-.track-details .meta {
-  padding: 20px;
-  border-bottom: 1px solid #999;
-  border-radius: 0 10px 0 0;
-  color: #999;
-}
-.track-details .meta .title {
-  height: 40px;
-  line-height: 40px;
-  font-size: 22px;
-  color: #333;
-}
-.track-details .meta .artist,
-.track-details .meta .album {
-  display: inline-block;
-  color: #999;
-}
-
-.track-details .subtitle {
-  flex-grow: 1;
-  
-  display: flex;
-  flex-direction: column;
-
-  padding: 30px 0;
-  font-size: 18px;
-  color: #999;
-  overflow-y: scroll;
-}
-.track-details .subtitle .subtitle-row {
-  flex-grow: 1;
-  padding: 10px 0;
-  text-align: center;
-}
-.subtitle-row.singing {
-  font-weight: 700;
-  color: #003;
+  cursor: pointer;
 }

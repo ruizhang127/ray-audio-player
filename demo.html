@@ -13,19 +13,10 @@
   <script>
     $(document).ready(() => {
       $('.demo-container').html(new RayPlayer({
-        listTitle: '生命圣诗',
         tracks: [{
-          audioUrl: '/static/audios/为我受伤.mp3',
-          subtitleUrl: '/static/subtitles/为我受伤.lrc'
-        }, {
-          // audioUrl: 'https://podcdn.zencast.fm/download/media/4501/323242b2-4814-4ecc-9591-969d072c6759.mp3'
-          // audioUrl: '/static/audios/为我受伤xxx.mp3'
-        }, {
-          audioUrl: '/static/audios/万福源头.mp3'
-        }, {
-          audioUrl: '/static/audios/何等奇妙的救主.mp3'
+          audioUrl: null,
+          subtitleUrl: null,
         }],
-        preload: true,
         autoNext: true,
         listLoop: true,
       }).UI);

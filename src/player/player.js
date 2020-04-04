@@ -1,24 +1,134 @@
-import $ from 'jquery';
-import Utils from '@/utils';
-import audioAPI from '@/audio-api';
-import PlayerUI from '@/player/player-ui';
+import parseAudioMetadata from 'parse-audio-metadata';
+import AudioModel from '../audio/audio-model-class';
+import audioAPI from '../audio/audio-api';
+import PlayerUI from './player-ui';
+import Utils from './utils';
 
-class RayPlayer {
+const filterCrossOriginUrl = (tracks) => {
+  const sourceTracks = (tracks && Array.isArray(tracks)) ? tracks : [];
+  const hostDomain = Utils.parseDomain(window.location.href);
+  const newTracks = sourceTracks
+    .filter((track) => {
+      const trackUrl = track.audioUrl;
+
+      if (!trackUrl || trackUrl.length === 0) {
+        return false;
+      }
+
+      const trackDomain = Utils.parseDomain(trackUrl);
+
+      if (!trackDomain) {
+        return false;
+      }
+
+      return trackUrl && [hostDomain, null].includes(Utils.parseDomain(trackUrl));
+    });
+
+
+  return newTracks;
+};
+
+const parseAudioBlob = (blob) => new Promise((resolve) => {
+  const fileReader = new FileReader();
+
+  fileReader.readAsArrayBuffer(blob);
+  fileReader.addEventListener('load', () => {
+    resolve(fileReader.result);
+  });
+});
+
+// Parse audio blob data
+const parseAudioData = async (audioBlob) => {
+  const metadata = await parseAudioMetadata(audioBlob);
+  const arrayBuffer = await parseAudioBlob(audioBlob);
+
+  return {
+    metadata,
+    arrayBuffer,
+  };
+};
+
+const fetchAudio = (path) => new Promise((resolve, reject) => {
+  const request = new XMLHttpRequest();
+
+  request.addEventListener('load', async (event) => {
+    if (request.status !== 200) {
+      reject(new Error('AudioLoadFailed'));
+      return;
+    }
+
+    const audioBlob = (event && event.target && event.target.response)
+      ? event.target.response
+      : null;
+
+    if (!audioBlob) {
+      resolve();
+    }
+
+    const parsedData = await parseAudioData(audioBlob);
+
+    audioAPI.context.decodeAudioData(parsedData.arrayBuffer, (buffer) => {
+      const loadedAudioModel = new AudioModel(path);
+      loadedAudioModel.buffer = buffer;
+      loadedAudioModel.meta = parsedData.metadata;
+
+      resolve(loadedAudioModel);
+    });
+  });
+
+  request.open('GET', path, true);
+  request.responseType = 'blob';
+  request.send();
+});
+
+const fetchSubtitle = (path) => new Promise((resolve) => {
+  const request = new XMLHttpRequest();
+
+  request.addEventListener('load', async (event) => {
+    if (request.status !== 200) {
+      throw new Error('SubtitleLoadFailed');
+    }
+
+    const subtitle = (event && event.target && event.target.response)
+      ? event.target.response
+      : null;
+
+    resolve(subtitle);
+  });
+
+  request.open('GET', path, true);
+  request.send();
+});
+
+/**
+ * Player Class
+ */
+class Player {
   constructor(options) {
     // Parameters
     this.options = options || {};
-    this.tracks = (this.options.tracks && Array.isArray(this.options.tracks))
-      ? this.options.tracks
-      : [];
-    this.container = options.container;
+    this.listTitle = this.options.listTitle || 'List Title';
+    this.tracks = filterCrossOriginUrl(this.options.tracks || []);
     this.theme = this.options.theme || 'default';
     this.subtitleShow = this.options.subtitleShow; // TODO
+    this.preload = this.options.preload || false;
     this.autoNext = this.options.autoNext || false;
     this.random = this.options.random || false; // TODO
 
     // Sequence control
     this.currentLoop = this.options.currentLoop || false; // TODO
     this.listLoop = this.options.listLoop || false;
+    this.trackIndexMap = {};
+    this.tracks.reduce((pre, value, index, list) => {
+      const track = {
+        preIndex: index > 0 ? index - 1 : 0,
+        nextIndex: index < list.length - 1 ? index + 1 : 0,
+      };
+
+      this.trackIndexMap[value.audioUrl] = track;
+
+      return pre;
+    }, {});
 
     // player status
     this.statusList = ['init', 'loaded', 'playing', 'pause'];
@@ -32,41 +142,58 @@ class RayPlayer {
      */
     this.playerUI = new PlayerUI();
 
+    this.playerUI.listTitle.html(this.listTitle);
+
     // Click a track in list to play track
-    this.tracks.forEach((track, index) => {
-      const row = {
+    this.tracks.forEach(async (track, index) => {
+      const newRow = {
         path: track.audioUrl,
         name: track.audioUrl.split('/').pop(),
       };
-      const trackRow = this.playerUI.addTrackRow(row, index);
 
-      trackRow.click(() => {
+      let preloadedAudio = null;
+      let loadedAudio = null;
+
+      // Load all audios (buffer, meta) before show track list
+      if (this.preload) {
+        try {
+          preloadedAudio = await this.load(newRow.path);
+          newRow.name = preloadedAudio.meta.title;
+        } catch (e) {
+          return;
+        }
+      }
+
+      const trackRow = this.playerUI.addTrackRow(newRow, index);
+
+      trackRow.click(async () => {
         // Prevent users from clicking continuously in a short time
         this.playerUI.trackList.attr('disabled', true);
 
-        this.stop(this.currentKey);
-        this.load(row.path).then((audio) => {
-          this.playerUI.selectTrack(trackRow);
-          this.playerUI.subtitle.empty();
+        // Stop the audio is playing
+        this.stop();
 
-          if (audio.subtitle) {
-            Utils.parseLRC(audio.subtitle).forEach((line) => {
-              this.playerUI.addSubtitleRow(line);
-            });
-          }
+        loadedAudio = preloadedAudio || await this.load(newRow.path);
+        this.playerUI.selectTrack(trackRow);
+        this.playerUI.subtitle.empty();
 
-          this.playerUI.loadMeta(audio.meta);
-          this.playerUI.loadProgress(audio.meta.duration);
+        if (loadedAudio.subtitle) {
+          Utils.parseLRC(loadedAudio.subtitle).forEach((line) => {
+            this.playerUI.addSubtitleRow(line);
+          });
+        }
 
-          this.play(row.path);
-          this.playerUI.switchButton('play');
+        this.playerUI.loadMeta(loadedAudio.meta);
+        this.playerUI.loadProgress(loadedAudio.meta.duration);
 
-          // Allow user to click again after starting playback
-          this.playerUI.trackList.removeAttr('disabled');
+        this.play(newRow.path);
+        this.playerUI.switchButton('play');
 
-          // Allow users to drag and drop only when playing
-          this.playerUI.progressBar.removeAttr('disabled');
-        });
+        // Allow user to click again after starting playback
+        this.playerUI.trackList.removeAttr('disabled');
+
+        // Allow users to drag and drop only when playing
+        this.playerUI.progressBar.removeAttr('disabled');
       });
     });
 
@@ -82,16 +209,18 @@ class RayPlayer {
       this.playerUI.progressBar.removeAttr('disabled');
     });
 
-    // Pause the playing track
+    // Control button's events
     this.playerUI.pauseButton.click(() => {
       this.pause();
-      this.playerUI.switchButton('pause');
     });
-
-    // Click play button to play/resume
     this.playerUI.playButton.click(() => {
-      this.play(this.currentKey);
-      this.playerUI.switchButton('play');
+      this.resume();
+    });
+    this.playerUI.preButton.click(() => {
+      this.playLast();
+    });
+    this.playerUI.nextButton.click(() => {
+      this.playNext();
     });
   }
 
@@ -109,11 +238,14 @@ class RayPlayer {
       return null;
     }
 
-    const track = this.tracks.find((t) => t.audioUrl === key);
-    const loadedAudio = await audioAPI.load(key);
+    const track = this.trackIndexMap[key];
+    const loadedAudio = await fetchAudio(key);
 
-    if (!loadedAudio.subtitle && track.subtitleUrl && track.subtitleUrl.length > 0) {
-      loadedAudio.subtitle = await $.get(track.subtitleUrl);
+    audioAPI.load(loadedAudio);
+
+    if (track.subtitleUrl && track.subtitleUrl.length > 0) {
+      loadedAudio.subtitle = await fetchSubtitle(track.subtitleUrl);
+      Utils.logger.debug(`[${loadedAudio.path}] subtitle has loaded`);
     }
 
     this.update('loaded');
@@ -121,11 +253,13 @@ class RayPlayer {
   }
 
   play(key, position) {
-    if (!key) {
+    const keyToPlay = key || this.currentKey;
+
+    if (!keyToPlay) {
       return;
     }
 
-    audioAPI.play(key, {
+    audioAPI.play(keyToPlay, position, {
       updated: (playingTime) => {
         this.playerUI.updateTrack(playingTime);
       },
@@ -133,25 +267,39 @@ class RayPlayer {
         this.playerUI.stopTrack(data);
 
         if (this.autoNext) {
-          this.playNext(this.tracks.indexOf(this.tracks.find((track) => track.audioUrl === key)));
+          this.playNext();
         }
       },
-    }, position);
+    });
 
     this.currentKey = key;
     this.update('playing');
   }
 
-  playNext(playedIndex) {
-    if (playedIndex < this.tracks.length - 1) {
-      this.playerUI.trackList.find(`#track-${playedIndex + 1}`).click();
-    } else if (this.listLoop) {
-      this.playNext(-1);
+  playLast() {
+    if (!this.currentKey) {
+      return;
     }
+
+    const { preIndex } = this.trackIndexMap[this.currentKey];
+    this.playerUI.trackList.find(`#track-${preIndex}`).click();
+  }
+
+  playNext() {
+    if (!this.currentKey) {
+      return;
+    }
+
+    const { nextIndex } = this.trackIndexMap[this.currentKey];
+    this.playerUI.trackList.find(`#track-${nextIndex}`).click();
   }
 
   playAt(position) {
-    this.stop();
+    if (!this.currentKey) {
+      return;
+    }
+
+    this.stop(this.currentKey);
     this.play(this.currentKey, position);
   }
 
@@ -162,6 +310,7 @@ class RayPlayer {
 
     audioAPI.pause(this.currentKey);
     this.update('pause');
+    this.playerUI.switchButton('pause');
   }
 
   resume() {
@@ -170,6 +319,7 @@ class RayPlayer {
     }
 
     this.play(this.currentKey);
+    this.playerUI.switchButton('play');
   }
 
   stop() {
@@ -204,4 +354,4 @@ class RayPlayer {
   }
 }
 
-export default RayPlayer;
+export default Player;

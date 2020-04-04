@@ -1,5 +1,4 @@
-import parseAudioMetadata from 'parse-audio-metadata';
-import AudioModel from '@/audio-model-class';
+import Utils from '../player/utils';
 
 const audioAPI = {};
 
@@ -11,7 +10,7 @@ const audioAPI = {};
 const init = () => {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   audioAPI.context = new AudioContext();
-  audioAPI.audios = {}; // Store audios have loaded
+  audioAPI.cacheAudios = {}; // Store audios have loaded in cache
   audioAPI.played = null;
   audioAPI.timer = 0;
 };
@@ -21,8 +20,8 @@ const bindPlayedListener = (handler, key) => {
   audioAPI.played = (event) => {
     audioAPI.source.removeEventListener('ended', audioAPI.played, false);
     clearInterval(audioAPI.timer);
-    handler(event);
     audioAPI.stop(key);
+    handler(event);
   };
   audioAPI.source.addEventListener('ended', audioAPI.played, false);
 };
@@ -34,7 +33,7 @@ const getPlayedSeconds = (start, now, position) => {
 };
 
 const sendTimePosition = (monitor, key) => {
-  const playing = audioAPI.audios[key];
+  const playing = audioAPI.cacheAudios[key];
   // The moment starts to play
   const newStart = audioAPI.context.currentTime;
   const playedSeconds = getPlayedSeconds(
@@ -57,43 +56,6 @@ const sendTimePosition = (monitor, key) => {
   }, integerSeconds - playedSeconds);
 };
 
-// Parse audio blob data
-const parseAudioData = async (audioBlob) => {
-  const metadata = await parseAudioMetadata(audioBlob);
-  const arrayBuffer = await audioBlob.arrayBuffer();
-  return {
-    metadata,
-    arrayBuffer,
-  };
-};
-
-// Get audio buffer and metadata from url
-const loadServerAudioData = (path) => new Promise((resolve) => {
-  const request = new XMLHttpRequest();
-  request.open('GET', path, true);
-  request.responseType = 'blob';
-
-  request.addEventListener('load', async (event) => {
-    const audioBlob = (event && event.target && event.target.response)
-      ? event.target.response
-      : null;
-
-    const am = new AudioModel(path);
-
-    if (audioBlob) {
-      const parsedData = await parseAudioData(audioBlob);
-      const buffer = await audioAPI.context.decodeAudioData(parsedData.arrayBuffer);
-      am.buffer = buffer;
-      am.meta = parsedData.metadata;
-    }
-
-    audioAPI.audios[am.path] = am;
-    resolve(am);
-  }, false);
-
-  request.send();
-});
-
 /**
  * Public interface
  */
@@ -101,21 +63,26 @@ const getAudioAPI = () => {
   if (!audioAPI.context) {
     init();
 
-    // Load audio file
-    audioAPI.load = async (path) => {
-      if (Object.keys(audioAPI.audios).includes(path)) {
-        return audioAPI.audios[path];
+    // save load file
+    audioAPI.load = (toLoad) => {
+      if (!Object.keys(audioAPI.cacheAudios).includes(toLoad.key)) {
+        audioAPI.cacheAudios[toLoad.key] = toLoad;
+        Utils.logger.debug(`[${toLoad.key}] audio has loaded in cache`);
       }
 
-      const audioModel = await loadServerAudioData(path);
-      return audioModel;
+      return audioAPI.cacheAudios[toLoad.key];
     };
 
     // Play audio
-    audioAPI.play = (key, funcs, position) => {
-      const toPlay = audioAPI.audios[key];
+    audioAPI.play = (key, position, funcs) => {
+      const toPlay = audioAPI.cacheAudios[key];
       const updateCallback = typeof funcs.updated === 'function' ? funcs.updated : null;
       const playedCallback = typeof funcs.played === 'function' ? funcs.played : null;
+
+      if (!toPlay) {
+        Utils.logger.debug(`[${key}] was not found in cache`);
+        return;
+      }
 
       // Build audio source for playing
       audioAPI.source = audioAPI.context.createBufferSource();
@@ -146,13 +113,11 @@ const getAudioAPI = () => {
 
       // Mark new start time for calculating on pause
       toPlay.startTime = audioAPI.context.currentTime;
-
-      // console.log(`Starts at: ${audioModel.timePosition || 0}`);
     };
 
     // Pause audio
     audioAPI.pause = (key) => {
-      const toPause = audioAPI.audios[key];
+      const toPause = audioAPI.cacheAudios[key];
 
       // Check there is an audio source is running a buffer
       if (!audioAPI.source || !audioAPI.source.buffer) {
@@ -180,15 +145,13 @@ const getAudioAPI = () => {
 
       // Mark current time position for replaying
       toPause.timePosition += (audioAPI.context.currentTime - toPause.startTime);
-
-      // console.log(`Stop at: ${audioModel.timePosition}`);
     };
 
     // Stop audio
     audioAPI.stop = (key) => {
       audioAPI.pause(key);
 
-      const toStop = audioAPI.audios[key];
+      const toStop = audioAPI.cacheAudios[key];
       toStop.startTime = 0;
       toStop.timePosition = 0;
     };

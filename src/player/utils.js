@@ -1,4 +1,37 @@
 export default {
+  logger: {
+    info: (msg) => {
+      console.log(msg);
+    },
+    debug: (msg) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(msg);
+      }
+    },
+  },
+
+  parseDomain(url) {
+    const relativePathReg = new RegExp(/^\/.*$/);
+    const fullUrlReg = new RegExp(/^[a-zA-Z]{3,5}:\/\/(?!\.)([a-zA-Z.]+):[0-9]{2,4}\/.*$/);
+    const urlReg = new RegExp(/^(?!\.)([a-zA-Z.]+):[0-9]{2,4}\/.*$/);
+
+    let domain = null;
+
+    if (relativePathReg.test(url)) {
+      return this.parseDomain(window.location.href);
+    }
+
+    if (url.match(fullUrlReg)) {
+      [, domain] = url.match(fullUrlReg);
+    }
+
+    if (url.match(urlReg)) {
+      [, domain] = url.match(urlReg);
+    }
+
+    return domain;
+  },
+
   parseTime(timeValue) {
     const seconds = parseInt(timeValue, 10);
     const timeData = {
