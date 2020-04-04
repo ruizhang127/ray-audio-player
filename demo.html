@@ -14,8 +14,7 @@
     $(document).ready(() => {
       $('.demo-container').html(new RayPlayer({
         tracks: [{
-          audioUrl: '/static/audios/为我受伤.mp3',
-          subtitleUrl: '/static/subtitles/为我受伤.lrc'
+          audioUrl: 'https://podcdn.zencast.fm/download/media/4501/6d94a4b0-b1ce-4087-93af-3540600d4ae6.mp3',
         }],
         autoNext: true,
         listLoop: true,
@@ -25,9 +24,6 @@
 </head>
 
 <body>
-  <!-- <audio preload="none" controls crossorigin="anonymous">
-    <source src="https://media.zencast.fm/2012-4/b75fda4e-579f-45aa-9c15-ae7a6128f566.mp3?source=feed" type="audio/mpeg"/>
-  </audio> -->
   <div class="demo-container"></div>
   <!-- built files will be auto injected -->
 </body>

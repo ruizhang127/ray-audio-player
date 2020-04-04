@@ -1,9 +1,10 @@
 import $ from 'jquery';
-import Utils from '@/utils';
-import audioAPI from '@/audio-api';
-import PlayerUI from '@/player/player-ui';
+import audioAPI from '../audio/audio-api';
+import PlayerUI from './player-ui';
+import Utils from './utils';
 
-class RayPlayer {
+
+class Player {
   constructor(options) {
     // Parameters
     this.options = options || {};
@@ -34,6 +35,10 @@ class RayPlayer {
 
     // Click a track in list to play track
     this.tracks.forEach((track, index) => {
+      if (!track.audioUrl || track.length === 0) {
+        return;
+      }
+
       const row = {
         path: track.audioUrl,
         name: track.audioUrl.split('/').pop(),
@@ -204,4 +209,4 @@ class RayPlayer {
   }
 }
 
-export default RayPlayer;
+export default Player;

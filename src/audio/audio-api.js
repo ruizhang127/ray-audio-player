@@ -1,5 +1,5 @@
 import parseAudioMetadata from 'parse-audio-metadata';
-import AudioModel from '@/audio-model-class';
+import AudioModel from './audio-model-class';
 
 const audioAPI = {};
 
