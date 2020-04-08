@@ -52,6 +52,7 @@ class PlayerUI {
     `);
 
     this.trackListDom = this.mainDom.find('.track-list');
+    this.listTitleDom = this.mainDom.find('.list-title');
 
     this.metaTitleDom = this.mainDom.find('.track-details .meta .title');
     this.metaArtistDom = this.mainDom.find('.track-details .meta .artist');
@@ -75,6 +76,10 @@ class PlayerUI {
 
   get trackList() {
     return this.trackListDom;
+  }
+
+  get listTitle() {
+    return this.listTitleDom;
   }
 
   get title() {

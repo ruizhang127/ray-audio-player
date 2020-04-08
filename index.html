@@ -13,10 +13,19 @@
   <script>
     $(document).ready(() => {
       $('.demo-container').html(new RayPlayer({
+        listTitle: '生命圣诗',
         tracks: [{
           audioUrl: '/static/audios/为我受伤.mp3',
           subtitleUrl: '/static/subtitles/为我受伤.lrc'
+        }, {
+          // audioUrl: 'https://podcdn.zencast.fm/download/media/4501/323242b2-4814-4ecc-9591-969d072c6759.mp3'
+          // audioUrl: '/static/audios/为我受伤xxx.mp3'
+        }, {
+          audioUrl: '/static/audios/万福源头.mp3'
+        }, {
+          audioUrl: '/static/audios/何等奇妙的救主.mp3'
         }],
+        preload: true,
         autoNext: true,
         listLoop: true,
       }).UI);
@@ -25,9 +34,6 @@
 </head>
 
 <body>
-  <!-- <audio preload="none" controls crossorigin="anonymous">
-    <source src="https://media.zencast.fm/2012-4/b75fda4e-579f-45aa-9c15-ae7a6128f566.mp3?source=feed" type="audio/mpeg"/>
-  </audio> -->
   <div class="demo-container"></div>
   <!-- built files will be auto injected -->
 </body>

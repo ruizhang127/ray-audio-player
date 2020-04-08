@@ -2,9 +2,10 @@ class AudioModel {
   constructor(path) {
     // Necessary for new audio
     this.path = path;
+    this.key = path;
+    this.fileName = this.path.split('/').pop();
 
     // Audio data
-    this.fileName = this.path.split('/').pop();
     this.meta = null;
     this.buffer = null;
     this.subtitle = null;
