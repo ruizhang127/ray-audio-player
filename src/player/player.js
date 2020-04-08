@@ -15,15 +15,8 @@ const filterCrossOriginUrl = (tracks) => {
         return false;
       }
 
-      const trackDomain = Utils.parseDomain(trackUrl);
-
-      if (!trackDomain) {
-        return false;
-      }
-
-      return trackUrl && [hostDomain, null].includes(Utils.parseDomain(trackUrl));
+      return [hostDomain, null].includes(Utils.parseDomain(trackUrl));
     });
-
 
   return newTracks;
 };
@@ -107,28 +100,36 @@ class Player {
   constructor(options) {
     // Parameters
     this.options = options || {};
-    this.listTitle = this.options.listTitle || 'List Title';
-    this.tracks = filterCrossOriginUrl(this.options.tracks || []);
+    this.playerTitle = this.options.playerTitle || 'Player Title';
     this.theme = this.options.theme || 'default';
-    this.subtitleShow = this.options.subtitleShow; // TODO
+    this.detailShow = this.options.detailShow || true; // TODO
     this.preload = this.options.preload || false;
-    this.autoNext = this.options.autoNext || false;
-    this.random = this.options.random || false; // TODO
+
 
     // Sequence control
+    this.autoNext = this.options.autoNext || false;
+    this.random = this.options.random || false; // TODO
     this.currentLoop = this.options.currentLoop || false; // TODO
     this.listLoop = this.options.listLoop || false;
-    this.trackIndexMap = {};
-    this.tracks.reduce((pre, value, index, list) => {
-      const track = {
-        preIndex: index > 0 ? index - 1 : 0,
-        nextIndex: index < list.length - 1 ? index + 1 : 0,
-      };
 
-      this.trackIndexMap[value.audioUrl] = track;
+    // Audio data
+    this.trackList = [];
+    this.trackMap = filterCrossOriginUrl(this.options.tracks || [])
+      .reduce((data, value, index, list) => {
+        const map = data;
+        const track = {
+          key: value.audioUrl,
+          subtitle: value.subtitleUrl,
+          index,
+          preIndex: index > 0 ? index - 1 : 0,
+          nextIndex: index < list.length - 1 ? index + 1 : 0,
+        };
 
-      return pre;
-    }, {});
+        map[value.audioUrl] = track;
+        this.trackList.push(track);
+
+        return map;
+      }, {});
 
     // player status
     this.statusList = ['init', 'loaded', 'playing', 'pause'];
@@ -142,13 +143,12 @@ class Player {
      */
     this.playerUI = new PlayerUI();
 
-    this.playerUI.listTitle.html(this.listTitle);
+    this.playerUI.playerTitle.html(this.playerTitle);
 
-    // Click a track in list to play track
-    this.tracks.forEach(async (track, index) => {
+    Utils.syncForeach(this.trackList, async (track, index) => {
       const newRow = {
-        path: track.audioUrl,
-        name: track.audioUrl.split('/').pop(),
+        path: track.key,
+        name: track.key.split('/').pop(),
       };
 
       let preloadedAudio = null;
@@ -166,7 +166,10 @@ class Player {
 
       const trackRow = this.playerUI.addTrackRow(newRow, index);
 
+      // Click a track in list to play track
       trackRow.click(async () => {
+        audioAPI.activate();
+
         // Prevent users from clicking continuously in a short time
         this.playerUI.trackList.attr('disabled', true);
 
@@ -177,8 +180,8 @@ class Player {
         this.playerUI.selectTrack(trackRow);
         this.playerUI.subtitle.empty();
 
-        if (loadedAudio.subtitle) {
-          Utils.parseLRC(loadedAudio.subtitle).forEach((line) => {
+        if (loadedAudio.subtitleText) {
+          Utils.parseLRC(loadedAudio.subtitleText).forEach((line) => {
             this.playerUI.addSubtitleRow(line);
           });
         }
@@ -210,6 +213,8 @@ class Player {
     });
 
     // Control button's events
+    this.playerUI.singleLoopButton.click(() => {
+    });
     this.playerUI.pauseButton.click(() => {
       this.pause();
     });
@@ -221,6 +226,9 @@ class Player {
     });
     this.playerUI.nextButton.click(() => {
       this.playNext();
+    });
+    this.playerUI.showDetailsButton.click(() => {
+      this.playerUI.switchDetails();
     });
   }
 
@@ -238,14 +246,14 @@ class Player {
       return null;
     }
 
-    const track = this.trackIndexMap[key];
+    const track = this.trackMap[key];
     const loadedAudio = await fetchAudio(key);
 
     audioAPI.load(loadedAudio);
 
-    if (track.subtitleUrl && track.subtitleUrl.length > 0) {
-      loadedAudio.subtitle = await fetchSubtitle(track.subtitleUrl);
-      Utils.logger.debug(`[${loadedAudio.path}] subtitle has loaded`);
+    if (track.subtitle && track.subtitle.length > 0) {
+      loadedAudio.subtitleText = await fetchSubtitle(track.subtitle);
+      // Utils.logger.debug(`[${loadedAudio.path}] subtitle has loaded`);
     }
 
     this.update('loaded');
@@ -281,7 +289,7 @@ class Player {
       return;
     }
 
-    const { preIndex } = this.trackIndexMap[this.currentKey];
+    const { preIndex } = this.trackMap[this.currentKey];
     this.playerUI.trackList.find(`#track-${preIndex}`).click();
   }
 
@@ -290,7 +298,7 @@ class Player {
       return;
     }
 
-    const { nextIndex } = this.trackIndexMap[this.currentKey];
+    const { nextIndex } = this.trackMap[this.currentKey];
     this.playerUI.trackList.find(`#track-${nextIndex}`).click();
   }
 

@@ -63,11 +63,17 @@ const getAudioAPI = () => {
   if (!audioAPI.context) {
     init();
 
+    audioAPI.activate = () => {
+      if (audioAPI.context.state === 'suspended') {
+        audioAPI.context.resume();
+      }
+    };
+
     // save load file
     audioAPI.load = (toLoad) => {
       if (!Object.keys(audioAPI.cacheAudios).includes(toLoad.key)) {
         audioAPI.cacheAudios[toLoad.key] = toLoad;
-        Utils.logger.debug(`[${toLoad.key}] audio has loaded in cache`);
+        // Utils.logger.debug(`[${toLoad.key}] audio has loaded in cache`);
       }
 
       return audioAPI.cacheAudios[toLoad.key];

@@ -29,6 +29,13 @@ module.exports = merge(baseWebpackConfig, {
   module: {
     rules: [
       {
+        test: /\.css$/i,
+        use: [
+          'style-loader',
+          'css-loader',
+        ],
+      },
+      {
         test: /\.(mp3||lrc)(\?.*)?$/,
         loader: 'url-loader',
         options: {

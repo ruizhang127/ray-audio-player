@@ -2,62 +2,79 @@
  * Player panel
  */
 .player-panel {
-  width: 100%;
-  height: 400px;
-  border-radius: 10px;
-  background-color: #fff;
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+
+  margin: 0 auto;
+
+  box-sizing: border-box;
+  width: calc(100vw - 6px);
+  max-width: 400px;
+  height: calc(100vh - 6px);
+  max-height: 550px;
+  font-size: 15px;
   font-family: Arial, Helvetica, sans-serif;
   color: #fff;
   cursor: default;
 }
 
+
+
+/**
+* Player title
+*/
+.player-panel .player-title {
+  padding: 0 20px;
+  border-radius: 10px 10px 0 0; 
+  height: 80px;
+  line-height: 80px;
+  background-color: #343646;
+  font-size: 28px;
+}
+
 /**
  * Content: track list & track details
  */
-.player-panel .content {
+
+.player-panel .player-content {
+  flex-grow: 1;
+
   display: flex;
-  top: 0;
-  width: 100%;
-  height: calc(100% - 70px);
+  flex-direction: column;
+
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
+
 
 /**
  * Track list
  */
 .player-panel .track-list {
-  display: flex;
-  flex-direction: column;
-  
-  border-radius: 10px 0 0 0;
-  width: 40%;
-  background-color: #282A36; /* fixed color */
+  flex-grow: 1;
+  background-color: #282A36;
+  overflow-y: auto;
 }
-.player-panel .list-title {
-  margin: 20px 20px 0;
-  height: 64px;
-  line-height: 64px;
-  font-size: 30px;
+.player-panel .track-list::-webkit-scrollbar {
+  display: none;
 }
-.player-panel .track-list .h-divider {
-  background-color: #999; /* fixed color */
-}
+
 .player-panel .track-row {
   padding: 0 20px;
   height: 40px;
   line-height: 40px;
-  border-bottom: 1px solid #333; /* fixed color */
-  font-size: 15px;
+  border-bottom: 1px solid #333;
   color: #fff;
   cursor: pointer;
 }
 .player-panel .track-row.selected {
-  color: #fff;
-  background-color: #50546c; /* fixed color */
+  font-size: 16px;
+  color: #999;
 }
 .player-panel .track-row:hover {
-  color: #999;
-  background-color: #50546c; /* fixed color */
+  color: #333;
+  background-color: #999;
 }
 
 /**
@@ -67,23 +84,31 @@
   display: flex;
   flex-direction: column;
 
-  border-top: 1px solid #999;
-  border-right: 1px solid #999;
-  border-radius: 0 10px 0 0;
-  width: 60%;
-  background-color: #fff;
+  position: absolute;
+  left: 100%;
+  top: 0;
+
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  background-color: #282A36;
+
+  transition: all .2s;
 }
+.player-panel .track-details.opened {
+  left: 0;
+}
+
 .player-panel .track-details .meta {
-  padding: 20px;
+  margin: 0 20px;
+  padding: 10px 0;
   border-bottom: 1px solid #999;
-  border-radius: 0 10px 0 0;
-  color: #999;
 }
 .player-panel .track-details .meta .title {
   height: 40px;
   line-height: 40px;
   font-size: 22px;
-  color: #333;
+  color: #fff;
 }
 .player-panel .track-details .meta .artist,
 .player-panel .track-details .meta .album {
@@ -97,11 +122,14 @@
   display: flex;
   flex-direction: column;
 
-  padding: 30px 0;
-  font-size: 18px;
+  padding: 0 20px;
   color: #999;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
+.player-panel .track-details .subtitle::-webkit-scrollbar {
+  display: none;
+}
+
 .player-panel .track-details .subtitle .subtitle-row {
   flex-grow: 1;
   padding: 10px 0;
@@ -109,7 +137,7 @@
 }
 .player-panel .subtitle-row.singing {
   font-weight: 700;
-  color: #003;
+  color: #fff;
 }
 
 
@@ -120,17 +148,10 @@
 /**
  * Bottom control bar
  */
- .player-panel .control {
-  display: flex;
-  flex-wrap: wrap-reverse;
-  align-items: center;
-  justify-content: space-evenly;
-
-  bottom: 0;
-  padding: 10px 0;
+.player-panel .player-control {
   width: 100%;
   border-radius: 0 0 10px 10px;
-  background-color: #343646; /* fixed color */
+  background-color: #343646;
 }
 
 /**
@@ -140,10 +161,7 @@
   display: flex;
   align-items: center;
   justify-content: space-evenly;
-  width: 30%;
-  max-width: 300px;
-  min-width: 150px;
-  height: 50px;
+  padding: 10px 10px 20px;
 }
 
 /**
@@ -192,7 +210,8 @@
 }
 
 .player-panel .control-buttons .pre,
-.player-panel .control-buttons .next {
+.player-panel .control-buttons .next,
+.player-panel .control-buttons .show-details {
   display: flex;
   cursor: pointer;
 }
@@ -213,13 +232,11 @@
  .player-panel .progress {
   display: flex;
   align-items: center;
-  width: 70%;
-  min-width: 300px;
-  height: 50px;
+  padding: 20px 0 10px;
 }
 .player-panel .progress input.progress-bar {
+  flex-grow: 1;
   appearance: none;
-  width: 75%;
   background-color: transparent;
   cursor: pointer;
 }
@@ -250,8 +267,8 @@
 .player-panel .progress .time {
   display: flex;
   justify-content: flex-end;
-  margin: 0 8px;
-  width: 40px;
+  margin: 0 10px;
+  width: 44px;
   text-align: center;
 }
 .player-panel .progress .duration {

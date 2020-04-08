@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import Utils from './utils';
+import testIcon from '../assets/images/twitter_icon.png';
 
 class PlayerUI {
   constructor(options) {
@@ -7,10 +8,10 @@ class PlayerUI {
     this.theme = this.options.theme || 'default';
     this.mainDom = $(`
       <div class="player-panel">
-        <div class="content">
-          <div class="track-list">
-            <div class="list-title">List Title</div>
-          </div>
+        <div class="player-title">Player Title</div>
+        <div class="player-content">
+          <div class="track-list"></div>
+
           <div class="track-details">
             <div class="meta">
               <div class="title"></div>
@@ -21,10 +22,20 @@ class PlayerUI {
 
             <div class="subtitle"></div>
           </div>
+
         </div>
 
-        <div class="control">
+        <div class="player-control">
+          <div class="progress">
+            <div class="played time">0:00</div>
+            <input class="progress-bar" value="0" min="0" max="10" step="1" type="range" disabled />
+            <div class="duration time">0:00</div>
+          </div>
+
           <div class="control-buttons">
+            <div class="single-loop">
+            O
+            </div>
             <div class="pre">
               <span class="column"></span>
               <span class="left-arrow"></span>
@@ -40,30 +51,32 @@ class PlayerUI {
               <span class="right-arrow"></span>
               <span class="column"></span>
             </div>
+            <div class="show-details">
+            <img width="30" src="${testIcon}" />
+            </div>
           </div>
 
-          <div class="progress">
-            <div class="played time"></div>
-            <input class="progress-bar" value="0" min="0" max="10" step="1" type="range" disabled />
-            <div class="duration time"></div>
-          </div>
+          
         </div>
       </div>
     `);
 
+    this.playerTitleDom = this.mainDom.find('.player-title');
     this.trackListDom = this.mainDom.find('.track-list');
-    this.listTitleDom = this.mainDom.find('.list-title');
+    this.trackDetailsDom = this.mainDom.find('.track-details');
 
     this.metaTitleDom = this.mainDom.find('.track-details .meta .title');
     this.metaArtistDom = this.mainDom.find('.track-details .meta .artist');
     this.metaAlbumDom = this.mainDom.find('.track-details .meta .album');
     this.subtitleDom = this.mainDom.find('.track-details .subtitle');
 
+    this.singleLoopButtonDom = this.mainDom.find('.control-buttons .single-loop');
     this.preButtonDom = this.mainDom.find('.control-buttons .pre');
     this.playCircleDom = this.mainDom.find('.play-circle-button');
     this.playButtonDom = this.mainDom.find('.play-circle-button .play');
     this.pauseButtonDom = this.mainDom.find('.play-circle-button .pause');
     this.nextButtonDom = this.mainDom.find('.control-buttons .next');
+    this.showDetailsButtonDom = this.mainDom.find('.control-buttons .show-details');
 
     this.progressPlayedDom = this.mainDom.find('.progress .played');
     this.progressBarDom = this.mainDom.find('.progress .progress-bar');
@@ -78,8 +91,12 @@ class PlayerUI {
     return this.trackListDom;
   }
 
-  get listTitle() {
-    return this.listTitleDom;
+  get trackDetails() {
+    return this.trackDetailsDom;
+  }
+
+  get playerTitle() {
+    return this.playerTitleDom;
   }
 
   get title() {
@@ -96,6 +113,10 @@ class PlayerUI {
 
   get subtitle() {
     return this.subtitleDom;
+  }
+
+  get singleLoopButton() {
+    return this.singleLoopButtonDom;
   }
 
   get preButton() {
@@ -116,6 +137,10 @@ class PlayerUI {
 
   get nextButton() {
     return this.nextButtonDom;
+  }
+
+  get showDetailsButton() {
+    return this.showDetailsButtonDom;
   }
 
   get played() {
@@ -190,6 +215,14 @@ class PlayerUI {
   switchButton(status) {
     this.playButtonDom[status === 'play' ? 'addClass' : 'removeClass']('hide');
     this.pauseButtonDom[status === 'pause' ? 'addClass' : 'removeClass']('hide');
+  }
+
+  switchDetails() {
+    this.trackDetailsDom[
+      this.trackDetailsDom.hasClass('opened')
+        ? 'removeClass'
+        : 'addClass'
+    ]('opened');
   }
 
   updateTrack(time) {

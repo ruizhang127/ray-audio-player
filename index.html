@@ -6,26 +6,46 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   <title><%= htmlWebpackPlugin.options.title %></title>
-  <script src="https://code.jquery.com/jquery-3.1.0.js"
-    integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk="
-    crossorigin="anonymous"
-  ></script>
+  <script src="https://code.jquery.com/jquery-3.1.0.js" integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk="
+    crossorigin="anonymous"></script>
   <script>
     $(document).ready(() => {
       $('.demo-container').html(new RayPlayer({
-        listTitle: '生命圣诗',
+        playerTitle: '生命圣诗',
         tracks: [{
-          audioUrl: '/static/audios/为我受伤.mp3',
+          audioUrl: '/static/audios/124 为我受伤.mp3',
           subtitleUrl: '/static/subtitles/为我受伤.lrc'
         }, {
           // audioUrl: 'https://podcdn.zencast.fm/download/media/4501/323242b2-4814-4ecc-9591-969d072c6759.mp3'
           // audioUrl: '/static/audios/为我受伤xxx.mp3'
         }, {
-          audioUrl: '/static/audios/万福源头.mp3'
+          audioUrl: '/static/audios/076 万福源头.mp3'
         }, {
-          audioUrl: '/static/audios/何等奇妙的救主.mp3'
+          audioUrl: '/static/audios/064 何等奇妙的救主.mp3'
+        }, {
+          audioUrl: '/static/audios/065 美哉主耶稣.mp3'
+        }, {
+          audioUrl: '/static/audios/122 奇妙十架.mp3'
+        }, {
+          audioUrl: '/static/audios/125 领我到髑髅地.mp3'
+        }, {
+          audioUrl: '/static/audios/178 奇异的爱.mp3'
+        }, {
+          audioUrl: '/static/audios/181 荣耀释放.mp3'
+        }, {
+          audioUrl: '/static/audios/185 奇异恩典.mp3'
+        }, {
+          audioUrl: '/static/audios/261 向万邦传福音.mp3'
+        }, {
+          audioUrl: '/static/audios/277 坚固磐石.mp3'
+        }, {
+          audioUrl: '/static/audios/282 我知谁掌管明天.mp3'
+        }, {
+          audioUrl: '/static/audios/367 靠近十架.mp3'
+        }, {
+          audioUrl: '/static/audios/387 主是我万有.mp3'
         }],
-        preload: true,
+        preload: false,
         autoNext: true,
         listLoop: true,
       }).UI);

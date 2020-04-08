@@ -15,25 +15,26 @@ module.exports = {
   },
 
   module: {
-    rules: [{
-      // CSS Files
-      test: /\.css$/i,
-      use: [
-        'style-loader',
-        'css-loader',
-        'postcss-loader',
-      ],
-    }, {
-      // JS Files
-      test: /\.js$/,
-      loader: 'babel-loader',
-      include: [path.join(__dirname, '..', 'src')],
-    }],
+    rules: [
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        include: [path.join(__dirname, '..', 'src')],
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          name: path.posix.join('static', 'img/[name].[hash:7].[ext]'),
+        },
+      },
+    ],
   },
 
   output: {
-    filename: 'ray-player.js',
-    path: path.resolve(__dirname, '../lib'),
+    filename: 'static/js/ray-player.js',
+    path: path.resolve(__dirname, '../dist'),
     libraryExport: 'default', // What name you export from entry file
     library: 'RayPlayer', // Variable name on page
   },

@@ -8,7 +8,7 @@ class AudioModel {
     // Audio data
     this.meta = null;
     this.buffer = null;
-    this.subtitle = null;
+    this.subtitleText = null;
 
     // Additional controlling during audio playing
     this.startTime = 0;

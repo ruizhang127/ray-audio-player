@@ -14,6 +14,7 @@ export default {
     const relativePathReg = new RegExp(/^\/.*$/);
     const fullUrlReg = new RegExp(/^[a-zA-Z]{3,5}:\/\/(?!\.)([a-zA-Z.]+):[0-9]{2,4}\/.*$/);
     const urlReg = new RegExp(/^(?!\.)([a-zA-Z.]+):[0-9]{2,4}\/.*$/);
+    const ipReg = new RegExp(/^([a-zA-Z]{3,5}:\/\/)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):[0-9]{2,4}\/?.*$/);
 
     let domain = null;
 
@@ -27,6 +28,10 @@ export default {
 
     if (url.match(urlReg)) {
       [, domain] = url.match(urlReg);
+    }
+
+    if (url.match(ipReg)) {
+      [,, domain] = url.match(ipReg);
     }
 
     return domain;
@@ -87,22 +92,32 @@ export default {
   },
 
   parseLRC(lrcString) {
-    const lines = lrcString.split('\n');
+    const lines = lrcString.split(/\n/);
     const parsedArray = [];
+    const lineReg = new RegExp(/^ *\[(\d{1,2}:)?(\d{1,2}):(\d{1,2})\](.*)(\r\n|\r|\n)*$/);
+
     lines.forEach((l) => {
-      if (!/ *\[(\d{1,2}:)?\d{1,2}:\d{1,2}\].*$/.test(l)) {
+      if (!lineReg.test(l)) {
         return;
       }
 
-      const lineArray = l.match(/ *\[(\d{1,2}:)?(\d{1,2}):(\d{1,2})\](.*)$/);
+      const lineArray = l.match(lineReg);
       const parsedLine = {
         time: this.calculateTime(lineArray[1], lineArray[2], lineArray[3]),
         content: lineArray[4],
       };
+
       parsedArray.push(parsedLine);
     });
 
     return parsedArray;
+  },
+
+  syncForeach(ary, handler) {
+    ary.reduce(async (lastPromise, value, index) => {
+      await lastPromise;
+      return handler(value, index);
+    }, Promise.resolve());
   },
 
 };
