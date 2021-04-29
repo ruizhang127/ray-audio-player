@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import Utils from './utils';
-import testIcon from '../assets/images/twitter_icon.png';
 
 class PlayerUI {
   constructor(options) {
@@ -8,15 +7,15 @@ class PlayerUI {
     this.theme = this.options.theme || 'default';
     this.mainDom = $(`
       <div class="player-panel">
-        <div class="player-title">Player Title</div>
+        <div class="player-title"></div>
         <div class="player-content">
           <div class="track-list"></div>
 
           <div class="track-details">
             <div class="meta">
               <div class="title"></div>
-              <div class="artist"></div>
               <div class="album"></div>
+              <div class="artist"></div>
               
             </div>
 
@@ -34,7 +33,10 @@ class PlayerUI {
 
           <div class="control-buttons">
             <div class="single-loop">
-            O
+              <svg id="main" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 72">
+                <path d="M91.1,12.24,90.42,0l16,16-3,3-13,13,.66-11.2H15.26a6.69,6.69,0,0,0-6.65,6.65V45a6.68,6.68,0,0,0,6.65,6.64h1.85v8.61H15.26A15.28,15.28,0,0,1,0,45V27.5A15.3,15.3,0,0,1,15.26,12.24Z" style="fill-rule:evenodd"/>
+                <path d="M36.9,59.75,37.58,72l-16-16,3-3,13-13-.66,11.14h75.81a6.68,6.68,0,0,0,6.65-6.64V27a6.68,6.68,0,0,0-6.65-6.64h-1.84V11.72h1.84A15.3,15.3,0,0,1,128,27V44.5a15.3,15.3,0,0,1-15.27,15.25Z" style="fill-rule:evenodd"/>
+              </svg>
             </div>
             <div class="pre">
               <span class="column"></span>
@@ -52,7 +54,9 @@ class PlayerUI {
               <span class="column"></span>
             </div>
             <div class="show-details">
-            <img width="30" src="${testIcon}" />
+              <p></p>
+              <p></p>
+              <p></p>
             </div>
           </div>
 
@@ -177,7 +181,7 @@ class PlayerUI {
 
   loadMeta(meta) {
     this.metaTitleDom.empty().html(meta.title);
-    this.metaArtistDom.empty().html(meta.artist);
+    this.metaArtistDom.empty().html(`by ${meta.artist}`);
     this.metaAlbumDom.empty().html(meta.album);
   }
 
@@ -200,7 +204,7 @@ class PlayerUI {
       const topToScroll = rowTop - containerTop + containerScrollTop;
 
       this.subtitleDom.animate({
-        scrollTop: topToScroll - 30,
+        scrollTop: topToScroll,
       });
     } else if (time === 0) {
       singingRow.removeClass('singing');
@@ -210,6 +214,14 @@ class PlayerUI {
     } else {
       this.scrollSubtitle(time - 1);
     }
+  }
+
+  switchSingleLoop() {
+    this.singleLoopButtonDom[
+      this.singleLoopButtonDom.hasClass('selected')
+        ? 'removeClass'
+        : 'addClass'
+    ]('selected');
   }
 
   switchButton(status) {
@@ -223,6 +235,12 @@ class PlayerUI {
         ? 'removeClass'
         : 'addClass'
     ]('opened');
+
+    this.showDetailsButtonDom[
+      this.showDetailsButtonDom.hasClass('selected')
+        ? 'removeClass'
+        : 'addClass'
+    ]('selected');
   }
 
   updateTrack(time) {
