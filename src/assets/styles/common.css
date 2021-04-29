@@ -14,9 +14,9 @@ html, body {
   display: block;
   width: 0; 
   height: 0; 
-  border-top: 7px solid transparent;
-  border-bottom: 7px solid transparent;
-  border-right: 12px solid #fff;
+  border-top: 0.4rem solid transparent;
+  border-bottom: 0.4rem solid transparent;
+  border-right: 0.75rem solid #fff;
   border-left: none;
 }
 
@@ -24,16 +24,16 @@ html, body {
   display: block;
   width: 0; 
   height: 0; 
-  border-top: 7px solid transparent;
-  border-bottom: 7px solid transparent;
+  border-top: 0.4rem solid transparent;
+  border-bottom: 0.4rem solid transparent;
   border-right: none;
-  border-left: 12px solid #fff;
+  border-left: 0.75rem solid #fff;
 }
 
 .column {
   display: block;
-  width: 3px; 
-  height: 14px; 
+  width: 0.15rem; 
+  height: 0.75rem; 
   background-color: #fff;
 }
 

@@ -11,9 +11,7 @@ const filterCrossOriginUrl = (tracks) => {
     .filter((track) => {
       const trackUrl = track.audioUrl;
 
-      if (!trackUrl || trackUrl.length === 0) {
-        return false;
-      }
+      if (!trackUrl || trackUrl.length === 0) return false;
 
       return [hostDomain, null].includes(Utils.parseDomain(trackUrl));
     });
@@ -45,28 +43,21 @@ const fetchAudio = (path) => new Promise((resolve, reject) => {
   const request = new XMLHttpRequest();
 
   request.addEventListener('load', async (event) => {
-    if (request.status !== 200) {
-      reject(new Error('AudioLoadFailed'));
-      return;
-    }
+    if (request.status !== 200) return reject(new Error('AudioLoadFailed'));
 
     const audioBlob = (event && event.target && event.target.response)
       ? event.target.response
       : null;
 
-    if (!audioBlob) {
-      resolve();
-    }
+    if (!audioBlob) return resolve();
 
     const parsedData = await parseAudioData(audioBlob);
+    const parsedBuffer = await audioAPI.context.decodeAudioData(parsedData.arrayBuffer);
+    const loadedAudioModel = new AudioModel(path);
+    loadedAudioModel.buffer = parsedBuffer;
+    loadedAudioModel.meta = parsedData.metadata;
 
-    audioAPI.context.decodeAudioData(parsedData.arrayBuffer, (buffer) => {
-      const loadedAudioModel = new AudioModel(path);
-      loadedAudioModel.buffer = buffer;
-      loadedAudioModel.meta = parsedData.metadata;
-
-      resolve(loadedAudioModel);
-    });
+    return resolve(loadedAudioModel);
   });
 
   request.open('GET', path, true);
@@ -78,9 +69,7 @@ const fetchSubtitle = (path) => new Promise((resolve) => {
   const request = new XMLHttpRequest();
 
   request.addEventListener('load', async (event) => {
-    if (request.status !== 200) {
-      throw new Error('SubtitleLoadFailed');
-    }
+    if (request.status !== 200) throw new Error('SubtitleLoadFailed');
 
     const subtitle = (event && event.target && event.target.response)
       ? event.target.response
@@ -101,7 +90,7 @@ class Player {
     // Parameters
     this.options = options || {};
     this.playerTitle = this.options.playerTitle || 'Player Title';
-    this.theme = this.options.theme || 'default';
+    this.theme = this.options.theme || 'default'; // TODO
     this.detailShow = this.options.detailShow || true; // TODO
     this.preload = this.options.preload || false;
 
@@ -109,7 +98,7 @@ class Player {
     // Sequence control
     this.autoNext = this.options.autoNext || false;
     this.random = this.options.random || false; // TODO
-    this.currentLoop = this.options.currentLoop || false; // TODO
+    this.currentLoop = this.options.currentLoop || false;
     this.listLoop = this.options.listLoop || false;
 
     // Audio data
@@ -143,7 +132,8 @@ class Player {
      */
     this.playerUI = new PlayerUI();
 
-    this.playerUI.playerTitle.html(this.playerTitle);
+    // Hide title of player
+    // this.playerUI.playerTitle.html(this.playerTitle);
 
     Utils.syncForeach(this.trackList, async (track, index) => {
       const newRow = {
@@ -167,7 +157,7 @@ class Player {
       const trackRow = this.playerUI.addTrackRow(newRow, index);
 
       // Click a track in list to play track
-      trackRow.click(async () => {
+      trackRow.on('click', async () => {
         audioAPI.activate();
 
         // Prevent users from clicking continuously in a short time
@@ -213,21 +203,27 @@ class Player {
     });
 
     // Control button's events
-    this.playerUI.singleLoopButton.click(() => {
+    this.playerUI.singleLoopButton.on('click', () => {
+      if (!this.currentKey) return;
+
+      this.currentLoop = !this.currentLoop;
+      this.playerUI.switchSingleLoop();
     });
-    this.playerUI.pauseButton.click(() => {
+    this.playerUI.pauseButton.on('click', () => {
       this.pause();
     });
-    this.playerUI.playButton.click(() => {
+    this.playerUI.playButton.on('click', () => {
       this.resume();
     });
-    this.playerUI.preButton.click(() => {
+    this.playerUI.preButton.on('click', () => {
       this.playLast();
     });
-    this.playerUI.nextButton.click(() => {
+    this.playerUI.nextButton.on('click', () => {
       this.playNext();
     });
-    this.playerUI.showDetailsButton.click(() => {
+    this.playerUI.showDetailsButton.on('click', () => {
+      if (!this.currentKey) return;
+
       this.playerUI.switchDetails();
     });
   }
@@ -242,9 +238,7 @@ class Player {
    * --------------------------
    */
   async load(key) {
-    if (!key) {
-      return null;
-    }
+    if (!key) return null;
 
     const track = this.trackMap[key];
     const loadedAudio = await fetchAudio(key);
@@ -263,9 +257,7 @@ class Player {
   play(key, position) {
     const keyToPlay = key || this.currentKey;
 
-    if (!keyToPlay) {
-      return;
-    }
+    if (!keyToPlay) return;
 
     audioAPI.play(keyToPlay, position, {
       updated: (playingTime) => {
@@ -275,7 +267,8 @@ class Player {
         this.playerUI.stopTrack(data);
 
         if (this.autoNext) {
-          this.playNext();
+          if (this.currentLoop) this.playLast();
+          else this.playNext();
         }
       },
     });
@@ -285,36 +278,28 @@ class Player {
   }
 
   playLast() {
-    if (!this.currentKey) {
-      return;
-    }
+    if (!this.currentKey) return;
 
     const { preIndex } = this.trackMap[this.currentKey];
-    this.playerUI.trackList.find(`#track-${preIndex}`).click();
+    this.playerUI.trackList.find(`#track-${preIndex}`).trigger('click');
   }
 
   playNext() {
-    if (!this.currentKey) {
-      return;
-    }
+    if (!this.currentKey) return;
 
     const { nextIndex } = this.trackMap[this.currentKey];
-    this.playerUI.trackList.find(`#track-${nextIndex}`).click();
+    this.playerUI.trackList.find(`#track-${nextIndex}`).trigger('click');
   }
 
   playAt(position) {
-    if (!this.currentKey) {
-      return;
-    }
+    if (!this.currentKey) return;
 
     this.stop(this.currentKey);
     this.play(this.currentKey, position);
   }
 
   pause() {
-    if (!this.currentKey) {
-      return;
-    }
+    if (!this.currentKey) return;
 
     audioAPI.pause(this.currentKey);
     this.update('pause');
@@ -322,27 +307,21 @@ class Player {
   }
 
   resume() {
-    if (!this.currentKey) {
-      return;
-    }
+    if (!this.currentKey) return;
 
     this.play(this.currentKey);
     this.playerUI.switchButton('play');
   }
 
   stop() {
-    if (!this.currentKey) {
-      return;
-    }
+    if (!this.currentKey) return;
 
     audioAPI.stop(this.currentKey);
     this.update('loaded');
   }
 
   update(newStatus) {
-    if (this.statusList.includes(newStatus)) {
-      this.playerStatus = newStatus;
-    }
+    if (this.statusList.includes(newStatus)) this.playerStatus = newStatus;
   }
 
   get status() {
