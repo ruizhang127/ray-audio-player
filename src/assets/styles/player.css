@@ -63,7 +63,7 @@
   display: none;
 }
 .player-panel .track-row {
-  padding: 0 1.25em;
+  padding: 0.5em 1.5em 0;
   height: 2.5em;
   line-height: 2.5em;
   border-bottom: 1px solid #333;
